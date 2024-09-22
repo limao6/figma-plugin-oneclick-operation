@@ -1,19 +1,8 @@
 {
-  "name": "aaa",
-  "id": "1419635682763233038",
+  "name": "Add Auto Layout",
+  "id": "com.example.add-auto-layout",
   "api": "1.0.0",
-  "main": "code.js",
-  "capabilities": [],
-  "enableProposedApi": false,
-  "documentAccess": "dynamic-page",
-  "editorType": [
-    "figma",
-    "figjam"
-  ],
+  "main": "code.ts",
   "ui": "ui.html",
-  "networkAccess": {
-    "allowedDomains": [
-      "none"
-    ]
-  }
+  "editorType": ["figma"]
 }

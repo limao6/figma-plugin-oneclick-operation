@@ -1,89 +1,73 @@
-// This file holds the main code for plugins. Code in this file has access to
-// the *figma document* via the figma global object.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
+// code.ts
 
-// Runs this code if the plugin is run in Figma
-if (figma.editorType === 'figma') {
-  // This plugin will open a window to prompt the user to enter a number, and
-  // it will then create that many rectangles on the screen.
+// 显示插件的用户界面
+figma.showUI(__html__, { width: 240, height: 200 }); // 增加高度以适应新按钮
 
-  // This shows the HTML page in "ui.html".
-  figma.showUI(__html__);
+// 处理消息
+figma.ui.onmessage = async (msg) => {
+  if (msg.type === 'add-auto-layout') {
+    const selection = figma.currentPage.selection;
 
-  // Calls to "parent.postMessage" from within the HTML page will trigger this
-  // callback. The callback will be passed the "pluginMessage" property of the
-  // posted message.
-  figma.ui.onmessage =  (msg: {type: string, count: number}) => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
-    if (msg.type === 'create-shapes') {
-      const nodes: SceneNode[] = [];
-      for (let i = 0; i < msg.count; i++) {
-        const rect = figma.createRectangle();
-        rect.x = i * 150;
-        rect.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-        figma.currentPage.appendChild(rect);
-        nodes.push(rect);
-      }
-      figma.currentPage.selection = nodes;
-      figma.viewport.scrollAndZoomIntoView(nodes);
+    if (selection.length === 0) {
+      figma.notify("请先选择一个或多个元素。");
+      return; // 如果没有选择元素，则退出
     }
 
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
-    figma.closePlugin();
-  };
-}
-
-// Runs this code if the plugin is run in FigJam
-if (figma.editorType === 'figjam') {
-  // This plugin will open a window to prompt the user to enter a number, and
-  // it will then create that many shapes and connectors on the screen.
-
-  // This shows the HTML page in "ui.html".
-  figma.showUI(__html__);
-
-  // Calls to "parent.postMessage" from within the HTML page will trigger this
-  // callback. The callback will be passed the "pluginMessage" property of the
-  // posted message.
-  figma.ui.onmessage =  (msg: {type: string, count: number}) => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
-    if (msg.type === 'create-shapes') {
-      const numberOfShapes = msg.count;
-      const nodes: SceneNode[] = [];
-      for (let i = 0; i < numberOfShapes; i++) {
-        const shape = figma.createShapeWithText();
-        // You can set shapeType to one of: 'SQUARE' | 'ELLIPSE' | 'ROUNDED_RECTANGLE' | 'DIAMOND' | 'TRIANGLE_UP' | 'TRIANGLE_DOWN' | 'PARALLELOGRAM_RIGHT' | 'PARALLELOGRAM_LEFT'
-        shape.shapeType = 'ROUNDED_RECTANGLE'
-        shape.x = i * (shape.width + 200);
-        shape.fills = [{type: 'SOLID', color: {r: 1, g: 0.5, b: 0}}];
-        figma.currentPage.appendChild(shape);
-        nodes.push(shape);
+    for (const node of selection) {
+      if ("layoutMode" in node) {
+        if (node.layoutMode === 'NONE') {
+          node.layoutMode = 'VERTICAL'; // 设置为垂直自动布局
+          node.paddingLeft = 10; // 设置内边距
+          node.paddingRight = 10;
+          node.paddingTop = 10;
+          node.paddingBottom = 10;
+        }
       }
-
-      for (let i = 0; i < (numberOfShapes - 1); i++) {
-        const connector = figma.createConnector();
-        connector.strokeWeight = 8
-
-        connector.connectorStart = {
-          endpointNodeId: nodes[i].id,
-          magnet: 'AUTO',
-        };
-
-        connector.connectorEnd = {
-          endpointNodeId: nodes[i+1].id,
-          magnet: 'AUTO',
-        };
-      }
-
-      figma.currentPage.selection = nodes;
-      figma.viewport.scrollAndZoomIntoView(nodes);
     }
 
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
-    figma.closePlugin();
-  };
+    figma.notify("已为选中的元素添加自动布局属性。");
+  }
+
+  if (msg.type === 'remove-auto-layout') {
+    const selection = figma.currentPage.selection;
+
+    if (selection.length === 0) {
+      figma.notify("请先选择一个或多个元素。");
+      return; // 如果没有选择元素，则退出
+    }
+
+    for (const node of selection) {
+      if ("layoutMode" in node) {
+        if (node.layoutMode !== 'NONE') {
+          node.layoutMode = 'NONE'; // 移除自动布局
+        }
+      }
+    }
+
+    figma.notify("已为选中的元素移除自动布局属性。");
+  }
+
+  if (msg.type === 'add-parent-node') {
+    const selection = figma.currentPage.selection;
+
+    if (selection.length === 0) {
+      figma.notify("请先选择一个或多个元素。");
+      return; // 如果没有选择元素，则退出
+    }
+
+    // 为每个选中的元素添加一个父级节点
+    for (const node of selection) {
+      // 创建一个新的父级节点
+      const parentNode = figma.createFrame();
+      parentNode.name = `${node.name} - Parent Node`; // 设置父级节点的名称
+      parentNode.resize(node.width + 20, node.height + 20); // 根据子节点的大小设置父级节点的大小
+      parentNode.x = node.x - 10; // 设置父级节点的位置，确保子节点在中间
+      parentNode.y = node.y - 10;
+
+      // 将选中的节点添加到父级节点中
+      parentNode.appendChild(node);
+    }
+
+    figma.notify("已为每个选中的元素添加父级节点。");
+  }
 };

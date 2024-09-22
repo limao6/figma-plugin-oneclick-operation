@@ -1,17 +1,42 @@
-<h2>Shape Creator</h2>
-<p>Count: <input id="count" type="number" value="5"></p>
-<button id="create">Create</button>
-<button id="cancel">Cancel</button>
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Auto Layout</title>
+  <style>
+    body {
+      width: 240px;
+      height: 200px; /* 增加高度以容纳新按钮 */
+      display: flex;
+      flex-direction: column; /* 纵向排列按钮 */
+      justify-content: center;
+      align-items: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px 0; /* 添加间距 */
+    }
+  </style>
+</head>
+<body>
+  <button id="add-auto-layout">添加自动布局</button>
+  <button id="remove-auto-layout">删除自动布局</button> <!-- 删除自动布局按钮 -->
+  <button id="add-parent-node">添加父级节点</button> <!-- 新增的按钮 -->
+  <script>
+    document.getElementById('add-auto-layout').onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'add-auto-layout' } }, '*');
+    };
 
-document.getElementById('create').onclick = () => {
-  const textbox = document.getElementById('count');
-  const count = parseInt(textbox.value, 10);
-  parent.postMessage({ pluginMessage: { type: 'create-shapes', count } }, '*')
-}
+    document.getElementById('remove-auto-layout').onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'remove-auto-layout' } }, '*');
+    };
 
-document.getElementById('cancel').onclick = () => {
-  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
-}
-
-</script>
+    document.getElementById('add-parent-node').onclick = () => {
+      parent.postMessage({ pluginMessage: { type: 'add-parent-node' } }, '*'); // 发送消息以添加父级节点
+    };
+  </script>
+</body>
+</html>
